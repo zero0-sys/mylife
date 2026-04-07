@@ -1,0 +1,317 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    function isDocOwner() {
+      return isAuthenticated() && request.auth.uid == resource.data.userId;
+    }
+
+    function isNewDocOwner() {
+      return isAuthenticated() && request.auth.uid == request.resource.data.userId;
+    }
+    
+    function hasRequiredFields(fields) {
+      return request.resource.data.keys().hasAll(fields);
+    }
+    
+    function hasOnlyAllowedFields(fields) {
+      return request.resource.data.keys().hasOnly(fields);
+    }
+    
+    function validStringLength(field, minLen, maxLen) {
+      return request.resource.data[field] is string &&
+        request.resource.data[field].size() >= minLen &&
+        request.resource.data[field].size() <= maxLen;
+    }
+
+    function validOptionalStringLength(field, minLen, maxLen) {
+      return !(field in request.resource.data) ||
+        request.resource.data[field] == null ||
+        (request.resource.data[field] is string &&
+         request.resource.data[field].size() >= minLen &&
+         request.resource.data[field].size() <= maxLen);
+    }
+
+    function areImmutableFieldsUnchanged(fields) {
+      return !request.resource.data.diff(resource.data).affectedKeys().hasAny(fields);
+    }
+
+    function isValidDateString(dateStr) {
+      return dateStr is string &&
+        dateStr.matches("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.*Z?$");
+    }
+
+    // ===============================================================
+    // Domain Validators
+    // ===============================================================
+    
+    function isValidUser() {
+      let allowedFields = ['uid', 'email', 'displayName', 'photoURL', 'pinHash', 'createdAt', 'coverURL', 'bio', 'school', 'work', 'birthday', 'danaKagetLink', 'chatId'];
+      let requiredFields = ['uid', 'email', 'createdAt'];
+      return hasOnlyAllowedFields(allowedFields) &&
+             hasRequiredFields(requiredFields) &&
+             request.resource.data.uid == request.auth.uid &&
+             validStringLength('email', 3, 100) &&
+             validOptionalStringLength('displayName', 0, 200) &&
+             validOptionalStringLength('photoURL', 0, 2000) &&
+             validOptionalStringLength('pinHash', 0, 200) &&
+             validOptionalStringLength('coverURL', 0, 2000) &&
+             validOptionalStringLength('bio', 0, 500) &&
+             validOptionalStringLength('school', 0, 100) &&
+             validOptionalStringLength('work', 0, 100) &&
+             validOptionalStringLength('birthday', 0, 50) &&
+             validOptionalStringLength('danaKagetLink', 0, 500) &&
+             validOptionalStringLength('chatId', 0, 20) &&
+             isValidDateString(request.resource.data.createdAt);
+    }
+
+    function isValidFinanceRecord() {
+      let allowedFields = ['userId', 'type', 'amount', 'category', 'note', 'date', 'createdAt'];
+      let requiredFields = ['userId', 'type', 'amount', 'category', 'date', 'createdAt'];
+      return hasOnlyAllowedFields(allowedFields) &&
+             hasRequiredFields(requiredFields) &&
+             request.resource.data.userId == request.auth.uid &&
+             request.resource.data.type in ['income', 'expense', 'savings', 'investment'] &&
+             request.resource.data.amount is number &&
+             request.resource.data.amount > 0 &&
+             validStringLength('category', 1, 50) &&
+             validOptionalStringLength('note', 0, 500) &&
+             isValidDateString(request.resource.data.date) &&
+             isValidDateString(request.resource.data.createdAt);
+    }
+
+    function isValidStudySession() {
+      let allowedFields = ['userId', 'startTime', 'endTime', 'duration', 'note', 'createdAt'];
+      let requiredFields = ['userId', 'startTime', 'endTime', 'duration', 'createdAt'];
+      return hasOnlyAllowedFields(allowedFields) &&
+             hasRequiredFields(requiredFields) &&
+             request.resource.data.userId == request.auth.uid &&
+             isValidDateString(request.resource.data.startTime) &&
+             isValidDateString(request.resource.data.endTime) &&
+             request.resource.data.duration is number &&
+             request.resource.data.duration >= 0 &&
+             validOptionalStringLength('note', 0, 500) &&
+             isValidDateString(request.resource.data.createdAt);
+    }
+
+    function isValidPrivateNote() {
+      let allowedFields = ['userId', 'title', 'content', 'mediaUrl', 'mediaType', 'createdAt', 'updatedAt'];
+      let requiredFields = ['userId', 'title', 'content', 'createdAt', 'updatedAt'];
+      return hasOnlyAllowedFields(allowedFields) &&
+             hasRequiredFields(requiredFields) &&
+             request.resource.data.userId == request.auth.uid &&
+             validStringLength('title', 1, 100) &&
+             validStringLength('content', 0, 10000) &&
+             validOptionalStringLength('mediaUrl', 0, 1048576) &&
+             validOptionalStringLength('mediaType', 0, 20) &&
+             isValidDateString(request.resource.data.createdAt) &&
+             isValidDateString(request.resource.data.updatedAt);
+    }
+
+    function isValidCharacterLog() {
+      let allowedFields = ['userId', 'type', 'points', 'description', 'date', 'createdAt', 'resolved'];
+      let requiredFields = ['userId', 'type', 'points', 'description', 'date', 'createdAt'];
+      return hasOnlyAllowedFields(allowedFields) &&
+             hasRequiredFields(requiredFields) &&
+             request.resource.data.userId == request.auth.uid &&
+             request.resource.data.type in ['strength', 'weakness'] &&
+             request.resource.data.points is number &&
+             request.resource.data.points > 0 &&
+             validStringLength('description', 1, 500) &&
+             isValidDateString(request.resource.data.date) &&
+             isValidDateString(request.resource.data.createdAt) &&
+             (!( 'resolved' in request.resource.data ) || request.resource.data.resolved is bool);
+    }
+
+    function isValidInvestmentGoal() {
+      let allowedFields = ['userId', 'targetAmount', 'title', 'updatedAt'];
+      let requiredFields = ['userId', 'targetAmount', 'title', 'updatedAt'];
+      return hasOnlyAllowedFields(allowedFields) &&
+             hasRequiredFields(requiredFields) &&
+             request.resource.data.userId == request.auth.uid &&
+             request.resource.data.targetAmount is number &&
+             request.resource.data.targetAmount > 0 &&
+             validStringLength('title', 1, 100) &&
+             isValidDateString(request.resource.data.updatedAt);
+    }
+
+    function isValidProjectDay() {
+      let allowedFields = ['userId', 'date', 'projectName', 'progress', 'nextStep', 'status', 'createdAt'];
+      let requiredFields = ['userId', 'date', 'status', 'createdAt'];
+      return hasOnlyAllowedFields(allowedFields) &&
+             hasRequiredFields(requiredFields) &&
+             request.resource.data.userId == request.auth.uid &&
+             isValidDateString(request.resource.data.date) &&
+             request.resource.data.status in ['active', 'skipped'] &&
+             validOptionalStringLength('projectName', 0, 100) &&
+             validOptionalStringLength('progress', 0, 1000) &&
+             validOptionalStringLength('nextStep', 0, 1000) &&
+             isValidDateString(request.resource.data.createdAt);
+    }
+
+    function isValidSocialPost() {
+      let allowedFields = ['userId', 'authorName', 'authorPhoto', 'content', 'mediaUrl', 'mediaType', 'likesCount', 'viewersCount', 'createdAt', 'isBot'];
+      let requiredFields = ['userId', 'content', 'likesCount', 'createdAt'];
+      return hasOnlyAllowedFields(allowedFields) &&
+             hasRequiredFields(requiredFields) &&
+             (request.resource.data.userId == request.auth.uid || request.resource.data.isBot == true) &&
+             validOptionalStringLength('authorName', 0, 200) &&
+             validOptionalStringLength('authorPhoto', 0, 2000) &&
+             validStringLength('content', 0, 5000) &&
+             validOptionalStringLength('mediaUrl', 0, 1048576) &&
+             validOptionalStringLength('mediaType', 0, 20) &&
+             request.resource.data.likesCount is number &&
+             request.resource.data.likesCount >= 0 &&
+             (!( 'viewersCount' in request.resource.data ) || (request.resource.data.viewersCount is number && request.resource.data.viewersCount >= 0)) &&
+             isValidDateString(request.resource.data.createdAt);
+    }
+
+    function isValidSocialComment() {
+      let allowedFields = ['postId', 'userId', 'authorName', 'authorPhoto', 'content', 'createdAt', 'isBot'];
+      let requiredFields = ['postId', 'userId', 'content', 'createdAt'];
+      return hasOnlyAllowedFields(allowedFields) &&
+             hasRequiredFields(requiredFields) &&
+             (request.resource.data.userId == request.auth.uid || request.resource.data.isBot == true) &&
+             validStringLength('postId', 1, 100) &&
+             validOptionalStringLength('authorName', 0, 200) &&
+             validOptionalStringLength('authorPhoto', 0, 2000) &&
+             validStringLength('content', 1, 1000) &&
+             isValidDateString(request.resource.data.createdAt);
+    }
+
+    function isValidQuote() {
+      let allowedFields = ['userId', 'authorName', 'content', 'points', 'createdAt'];
+      let requiredFields = ['userId', 'authorName', 'content', 'points', 'createdAt'];
+      return hasOnlyAllowedFields(allowedFields) &&
+             hasRequiredFields(requiredFields) &&
+             request.resource.data.userId == request.auth.uid &&
+             validStringLength('authorName', 1, 100) &&
+             validStringLength('content', 1, 1000) &&
+             request.resource.data.points is number &&
+             isValidDateString(request.resource.data.createdAt);
+    }
+
+    function isValidChatMessage() {
+      let allowedFields = ['sessionId', 'senderId', 'text', 'createdAt'];
+      let requiredFields = ['sessionId', 'senderId', 'text', 'createdAt'];
+      return hasOnlyAllowedFields(allowedFields) &&
+             hasRequiredFields(requiredFields) &&
+             validStringLength('sessionId', 1, 100) &&
+             validStringLength('senderId', 1, 100) &&
+             validStringLength('text', 1, 2000) &&
+             isValidDateString(request.resource.data.createdAt);
+    }
+
+    function isValidInternetUsage() {
+      let allowedFields = ['userId', 'gbAmount', 'date', 'createdAt'];
+      let requiredFields = ['userId', 'gbAmount', 'date', 'createdAt'];
+      return hasOnlyAllowedFields(allowedFields) &&
+             hasRequiredFields(requiredFields) &&
+             request.resource.data.userId == request.auth.uid &&
+             request.resource.data.gbAmount is number &&
+             request.resource.data.gbAmount > 0 &&
+             isValidDateString(request.resource.data.date) &&
+             isValidDateString(request.resource.data.createdAt);
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /users/{userId} {
+      allow read: if isAuthenticated(); // Allow reading profiles for social features
+      allow create: if isOwner(userId) && isValidUser();
+      allow update: if isOwner(userId) && isValidUser() && areImmutableFieldsUnchanged(['uid', 'email', 'createdAt']);
+      allow delete: if false;
+    }
+
+    match /internet_usage/{usageId} {
+      allow read: if isDocOwner();
+      allow create: if isNewDocOwner() && isValidInternetUsage();
+      allow update: if isDocOwner() && isNewDocOwner() && isValidInternetUsage() && areImmutableFieldsUnchanged(['userId', 'createdAt']);
+      allow delete: if isDocOwner();
+    }
+
+    match /quotes/{quoteId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isValidQuote();
+      allow update: if isAuthenticated() && 
+        areImmutableFieldsUnchanged(['userId', 'authorName', 'content', 'createdAt']) &&
+        request.resource.data.points is number;
+      allow delete: if isDocOwner();
+    }
+
+    match /chat_messages/{messageId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isValidChatMessage();
+      allow update: if false;
+      allow delete: if false;
+    }
+
+    match /finances/{financeId} {
+      allow read: if isDocOwner();
+      allow create: if isNewDocOwner() && isValidFinanceRecord();
+      allow update: if isDocOwner() && isNewDocOwner() && isValidFinanceRecord() && areImmutableFieldsUnchanged(['userId', 'createdAt']);
+      allow delete: if isDocOwner();
+    }
+
+    match /study_sessions/{sessionId} {
+      allow read: if isDocOwner();
+      allow create: if isNewDocOwner() && isValidStudySession();
+      allow update: if isDocOwner() && isNewDocOwner() && isValidStudySession() && areImmutableFieldsUnchanged(['userId', 'createdAt']);
+      allow delete: if isDocOwner();
+    }
+
+    match /private_notes/{noteId} {
+      allow read: if isDocOwner();
+      allow create: if isNewDocOwner() && isValidPrivateNote();
+      allow update: if isDocOwner() && isNewDocOwner() && isValidPrivateNote() && areImmutableFieldsUnchanged(['userId', 'createdAt']);
+      allow delete: if isDocOwner();
+    }
+
+    match /character_logs/{logId} {
+      allow read: if isDocOwner();
+      allow create: if isNewDocOwner() && isValidCharacterLog();
+      allow update: if isDocOwner() && isNewDocOwner() && isValidCharacterLog() && areImmutableFieldsUnchanged(['userId', 'createdAt', 'type', 'points', 'description', 'date']);
+      allow delete: if isDocOwner();
+    }
+
+    match /investment_goals/{goalId} {
+      allow read: if isDocOwner();
+      allow create: if isNewDocOwner() && isValidInvestmentGoal();
+      allow update: if isDocOwner() && isNewDocOwner() && isValidInvestmentGoal() && areImmutableFieldsUnchanged(['userId']);
+      allow delete: if isDocOwner();
+    }
+
+    match /project_days/{dayId} {
+      allow read: if isDocOwner();
+      allow create: if isNewDocOwner() && isValidProjectDay();
+      allow update: if isDocOwner() && isNewDocOwner() && isValidProjectDay() && areImmutableFieldsUnchanged(['userId', 'createdAt']);
+      allow delete: if isDocOwner();
+    }
+
+    match /social_posts/{postId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isValidSocialPost();
+      allow update: if isAuthenticated() && isValidSocialPost() && areImmutableFieldsUnchanged(['userId', 'createdAt']);
+      allow delete: if isDocOwner();
+    }
+
+    match /social_comments/{commentId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isValidSocialComment();
+      allow update: if isAuthenticated() && isValidSocialComment() && areImmutableFieldsUnchanged(['postId', 'userId', 'createdAt']);
+      allow delete: if isDocOwner();
+    }
+  }
+}

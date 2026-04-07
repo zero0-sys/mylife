@@ -1,0 +1,137 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile and security settings",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string" },
+        "displayName": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "pinHash": { "type": "string", "description": "Hashed PIN for private notes" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email", "createdAt"]
+    },
+    "FinanceRecord": {
+      "title": "Finance Record",
+      "description": "A record of income, expense, savings, or investment",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "type": { "type": "string", "enum": ["income", "expense", "savings", "investment"] },
+        "amount": { "type": "number" },
+        "category": { "type": "string" },
+        "note": { "type": "string" },
+        "date": { "type": "string", "format": "date-time" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "type", "amount", "category", "date", "createdAt"]
+    },
+    "StudySession": {
+      "title": "Study Session",
+      "description": "A record of a study session",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "startTime": { "type": "string", "format": "date-time" },
+        "endTime": { "type": "string", "format": "date-time" },
+        "duration": { "type": "number", "description": "Duration in seconds" },
+        "note": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "startTime", "endTime", "duration", "createdAt"]
+    },
+    "PrivateNote": {
+      "title": "Private Note",
+      "description": "A secure note that requires a PIN to access",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "title": { "type": "string" },
+        "content": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "title", "content", "createdAt", "updatedAt"]
+    },
+    "CharacterLog": {
+      "title": "Character Log",
+      "description": "A record of a strength or weakness action",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "type": { "type": "string", "enum": ["strength", "weakness"] },
+        "points": { "type": "number" },
+        "description": { "type": "string" },
+        "date": { "type": "string", "format": "date-time" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "type", "points", "description", "date", "createdAt"]
+    },
+    "SocialPost": {
+      "title": "Social Post",
+      "description": "A post in the social feed",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "authorName": { "type": "string" },
+        "authorPhoto": { "type": "string" },
+        "content": { "type": "string" },
+        "mediaUrl": { "type": "string" },
+        "mediaType": { "type": "string", "enum": ["image", "video", "link"] },
+        "likesCount": { "type": "number" },
+        "viewersCount": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "isBot": { "type": "boolean" }
+      },
+      "required": ["userId", "content", "likesCount", "createdAt"]
+    },
+    "SocialComment": {
+      "title": "Social Comment",
+      "description": "A comment on a social post",
+      "type": "object",
+      "properties": {
+        "postId": { "type": "string" },
+        "userId": { "type": "string" },
+        "authorName": { "type": "string" },
+        "authorPhoto": { "type": "string" },
+        "content": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "isBot": { "type": "boolean" }
+      },
+      "required": ["postId", "userId", "content", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/User" },
+      "description": "User profiles"
+    },
+    "/finances/{financeId}": {
+      "schema": { "$ref": "#/entities/FinanceRecord" },
+      "description": "Finance records"
+    },
+    "/study_sessions/{sessionId}": {
+      "schema": { "$ref": "#/entities/StudySession" },
+      "description": "Study sessions"
+    },
+    "/private_notes/{noteId}": {
+      "schema": { "$ref": "#/entities/PrivateNote" },
+      "description": "Private notes"
+    },
+    "/character_logs/{logId}": {
+      "schema": { "$ref": "#/entities/CharacterLog" },
+      "description": "Character logs"
+    },
+    "/social_posts/{postId}": {
+      "schema": { "$ref": "#/entities/SocialPost" },
+      "description": "Social posts"
+    },
+    "/social_comments/{commentId}": {
+      "schema": { "$ref": "#/entities/SocialComment" },
+      "description": "Social comments"
+    }
+  }
+}

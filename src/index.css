@@ -1,0 +1,50 @@
+@import "tailwindcss";
+
+@layer base {
+  /* Dark Scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #000000;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #1a1a1a;
+    border-radius: 10px;
+    border: 2px solid #000000;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #333333;
+  }
+
+  /* Firefox */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: #1a1a1a #000000;
+  }
+
+  /* Mobile Scaling */
+  @media (max-width: 768px) {
+    html {
+      font-size: 14px;
+    }
+    .rounded-3xl {
+      border-radius: 1.25rem; /* Slightly smaller radius for mobile */
+    }
+    .p-6 {
+      padding: 1rem;
+    }
+    .gap-6 {
+      gap: 1rem;
+    }
+  }
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

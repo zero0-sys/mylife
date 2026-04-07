@@ -1,0 +1,5 @@
+{
+  "name": "LifeTracker Glass",
+  "description": "A comprehensive life tracking app with finance, study timer, secure notes, and character building features.",
+  "requestFramePermissions": ["camera", "microphone", "geolocation"]
+}

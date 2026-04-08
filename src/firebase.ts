@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut } from 'firebase/auth';
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 
 // Firebase config from environment variables (set in Netlify or .env file)
@@ -20,16 +20,12 @@ export const googleProvider = new GoogleAuthProvider();
 
 export const loginWithGoogle = async () => {
   try {
-    // Use redirect-based sign-in (more reliable on deployed apps — avoids popup-blocked errors)
-    await signInWithRedirect(auth, googleProvider);
+    await signInWithPopup(auth, googleProvider);
   } catch (error) {
     console.error("Error signing in with Google", error);
     throw error;
   }
 };
-
-// Call this once on app load to complete the redirect sign-in flow
-export { getRedirectResult };
 
 export const logout = async () => {
   try {

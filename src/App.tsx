@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { Toaster } from 'react-hot-toast';
-import { auth, db, getRedirectResult } from './firebase';
+import { auth, db } from './firebase';
 import { useStore } from './store/useStore';
 import { Auth } from './components/Auth';
 import { Layout } from './components/Layout';
@@ -24,11 +24,6 @@ export default function App() {
   const { user, setUser, isAuthReady, setAuthReady, activeTab } = useStore();
 
   useEffect(() => {
-    // Handle redirect result from Google sign-in (completes the redirect flow)
-    getRedirectResult(auth).catch((error) => {
-      console.error("Redirect sign-in error:", error);
-    });
-
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
       

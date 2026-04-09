@@ -122,8 +122,9 @@ export function SocialFeed() {
       });
       
       setNewComment(prev => ({ ...prev, [postId]: '' }));
-    } catch (error) {
-      toast.error('Gagal mengirim komentar.');
+    } catch (error: any) {
+      console.error("Gagal mengirim komentar:", error);
+      toast.error('Gagal mengirim komentar: ' + (error.message || 'Error Firebase Rules.'));
     }
   };
 

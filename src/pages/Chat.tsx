@@ -89,19 +89,24 @@ export function Chat() {
       return;
     }
     
-    // Create a deterministic session ID based on both chat IDs
-    const sortedIds = [myChatId, target].sort();
-    const sessionId = `${sortedIds[0]}_${sortedIds[1]}`;
-    
-    // Upsert session
-    await setDoc(doc(db, 'chat_sessions', sessionId), {
-      participants: [myChatId, target],
-      updatedAt: new Date().toISOString()
-    }, { merge: true });
+    try {
+      // Create a deterministic session ID based on both chat IDs
+      const sortedIds = [myChatId, target].sort();
+      const sessionId = `${sortedIds[0]}_${sortedIds[1]}`;
+      
+      // Upsert session
+      await setDoc(doc(db, 'chat_sessions', sessionId), {
+        participants: [myChatId, target],
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
 
-    setActiveSession(sessionId);
-    setTargetId(target);
-    toast.success(`Terhubung dengan ID: ${target}`);
+      setActiveSession(sessionId);
+      setTargetId(target);
+      toast.success(`Terhubung dengan ID: ${target}`);
+    } catch (error: any) {
+      console.error("Gagal memulai chat:", error);
+      toast.error('Gagal terhubung: ' + (error.message || 'Error tidak diketahui (Periksa Firebase Rules)'));
+    }
   };
 
   const handleSendMessage = async (e: React.FormEvent) => {

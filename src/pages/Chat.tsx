@@ -202,7 +202,7 @@ export function Chat() {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="max-w-4xl mx-auto h-[calc(100dvh-5rem)] md:h-[calc(100dvh-8rem)] min-h-[500px] flex flex-col overscroll-none"
+      className="max-w-4xl mx-auto h-[calc(100dvh-8rem)] md:h-[calc(100dvh-6rem)] min-h-[400px] flex flex-col overscroll-none"
     >
       <div className="flex items-center gap-3 mb-6 shrink-0 pt-2">
         <div className="w-12 h-12 bg-teal-500/20 rounded-2xl flex items-center justify-center">

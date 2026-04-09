@@ -39,23 +39,20 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
   const verifyPortofolioPin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) return;
     setIsCheckingPin(true);
-    try {
-      const userDoc = await getDoc(doc(db, 'users', user.uid));
-      if (userDoc.exists() && userDoc.data().pinHash === portofolioPinInput) {
-        toast.success('Akses Diberikan');
-        setIsPortofolioPinOpen(false);
-        setPortofolioPinInput('');
-        window.open('https://naufalstudio.netlify.app/', '_blank', 'noopener,noreferrer');
-      } else {
-        toast.error('PIN Salah');
-      }
-    } catch (error) {
-      toast.error('Gagal memverifikasi PIN');
-    } finally {
-      setIsCheckingPin(false);
+    
+    // Simulate slight delay for UX
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    if (portofolioPinInput === '1537') {
+      toast.success('Akses Diberikan');
+      setIsPortofolioPinOpen(false);
+      setPortofolioPinInput('');
+      window.open('https://naufalstudio.netlify.app/', '_blank', 'noopener,noreferrer');
+    } else {
+      toast.error('PIN Salah');
     }
+    setIsCheckingPin(false);
   };
 
   const handleResetData = async () => {
@@ -242,7 +239,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             </div>
             <h3 className="text-xl font-bold text-white mb-2">Akses Portofolio</h3>
             <p className="text-slate-400 mb-6 text-sm">
-              Masukkan PIN yang sama dengan PIN keamanan catatanmu.
+              Masukkan PIN Portofolio untuk melihat tautan.
             </p>
             <form onSubmit={verifyPortofolioPin} className="space-y-4">
               <input

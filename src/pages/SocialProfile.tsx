@@ -327,31 +327,45 @@ export function SocialProfile() {
 
   const takePhoto = () => {
     if (!videoRef.current) return;
-    const canvas = document.createElement('canvas');
-    canvas.width = videoRef.current.videoWidth;
-    canvas.height = videoRef.current.videoHeight;
-    const ctx = canvas.getContext('2d');
-    ctx?.drawImage(videoRef.current, 0, 0);
-    
-    // Resize for Firestore
-    const resizedCanvas = document.createElement('canvas');
-    const MAX_WIDTH = 600;
-    const MAX_HEIGHT = 600;
-    let width = canvas.width;
-    let height = canvas.height;
-    if (width > height) {
-      if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
-    } else {
-      if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; }
-    }
-    resizedCanvas.width = width;
-    resizedCanvas.height = height;
-    resizedCanvas.getContext('2d')?.drawImage(canvas, 0, 0, width, height);
+    try {
+      const video = videoRef.current;
+      if (!video.videoWidth || !video.videoHeight) {
+        toast.error('Kamera belum siap sepenuhnya, tunggu sebentar.');
+        return;
+      }
+      
+      const canvas = document.createElement('canvas');
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext('2d');
+      ctx?.drawImage(video, 0, 0);
+      
+      // Resize for Firestore
+      const resizedCanvas = document.createElement('canvas');
+      const MAX_WIDTH = 600;
+      const MAX_HEIGHT = 600;
+      let width = canvas.width;
+      let height = canvas.height;
+      
+      if (width > height) {
+        if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
+      } else {
+        if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; }
+      }
+      
+      resizedCanvas.width = width;
+      resizedCanvas.height = height;
+      resizedCanvas.getContext('2d')?.drawImage(canvas, 0, 0, width, height);
 
-    const dataUrl = resizedCanvas.toDataURL('image/jpeg', 0.6);
-    setMediaUrl(dataUrl);
-    setMediaType('image');
-    stopCamera();
+      const dataUrl = resizedCanvas.toDataURL('image/jpeg', 0.7);
+      setMediaUrl(dataUrl);
+      setMediaType('image');
+      stopCamera();
+      toast.success('Foto berhasil ditangkap!');
+    } catch (err) {
+      console.error('Error taking photo:', err);
+      toast.error('Gagal mengambil foto.');
+    }
   };
 
   const startRecording = () => {

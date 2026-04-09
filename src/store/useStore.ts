@@ -19,8 +19,11 @@ export const useStore = create<AppState>((set) => ({
   setUser: (user) => set({ user }),
   isAuthReady: false,
   setAuthReady: (ready) => set({ isAuthReady: ready }),
-  activeTab: 'dashboard',
-  setActiveTab: (tab) => set({ activeTab: tab }),
+  activeTab: localStorage.getItem('activeTab') || 'dashboard',
+  setActiveTab: (tab) => {
+    localStorage.setItem('activeTab', tab);
+    set({ activeTab: tab });
+  },
   pinUnlocked: false,
   setPinUnlocked: (unlocked) => set({ pinUnlocked: unlocked }),
   viewPostId: null,

@@ -204,7 +204,7 @@ export function PostDetail({ postId }: { postId: string }) {
           </button>
           <div className="flex items-center gap-2 text-slate-400">
             <Eye size={24} />
-            <span className="font-bold text-lg">{(post.viewersCount || likesDisplay + 123).toLocaleString()}</span>
+            <span className="font-bold text-lg">{(post.viewersCount || 0).toLocaleString()}</span>
           </div>
         </div>
 

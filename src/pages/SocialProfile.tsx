@@ -242,7 +242,7 @@ export function SocialProfile() {
         </button>
         <div className="flex items-center gap-1">
           <Eye size={18} />
-          <span className="text-sm">{(post.viewersCount || (likesDisplay) + 123).toLocaleString()}</span>
+          <span className="text-sm">{(post.viewersCount || 0).toLocaleString()}</span>
         </div>
         <button 
           onClick={(e) => {
@@ -448,15 +448,9 @@ export function SocialProfile() {
 
     setIsSubmitting(true);
     try {
-      // Random Likes Logic
-      const rand = Math.random();
-      let likesCount = 0;
-      if (rand < 0.1) likesCount = Math.floor(Math.random() * 9000000) + 1000000; // 1M - 10M
-      else if (rand < 0.3) likesCount = Math.floor(Math.random() * 900000) + 100000; // 100k - 1M
-      else if (rand < 0.6) likesCount = Math.floor(Math.random() * 99000) + 1000; // 1k - 100k
-      else likesCount = Math.floor(Math.random() * 999) + 1; // 1 - 1000
-
-      const viewersCount = likesCount + Math.floor(Math.random() * 1000000) + 500;
+      // Likes logic removed
+      const likesCount = 0;
+      const viewersCount = 0;
 
       const newPostRef = await addDoc(collection(db, 'social_posts'), {
         userId: user.uid,
@@ -466,8 +460,8 @@ export function SocialProfile() {
         mediaUrl: mediaUrl || null,
         mediaType: mediaType || null,
         likedBy: [],
-        likesCount,
-        viewersCount,
+        likesCount: 0,
+        viewersCount: 0,
         createdAt: new Date().toISOString(),
         isBot: false
       });

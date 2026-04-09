@@ -208,7 +208,7 @@ export function SocialFeed() {
         </button>
         <div className="flex items-center gap-1">
           <Eye size={18} />
-          <span className="text-sm">{(post.viewersCount || (likesDisplay) + 123).toLocaleString()}</span>
+          <span className="text-sm">{(post.viewersCount || 0).toLocaleString()}</span>
         </div>
         <button 
           onClick={(e) => {

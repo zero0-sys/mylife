@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { collection, query, onSnapshot, addDoc, updateDoc, doc, orderBy, limit, where } from 'firebase/firestore';
+import { collection, query, onSnapshot, addDoc, updateDoc, doc, orderBy, limit, where, deleteDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useStore } from '../store/useStore';
 import { format } from 'date-fns';
@@ -97,15 +97,11 @@ export function SocialFeed() {
   const handleDeletePost = async (postId: string) => {
     if (!confirm('Hapus postingan ini?')) return;
     try {
-      await updateDoc(doc(db, 'social_posts', postId), {
-        isDeleted: true
-      });
-      // Instead of actual deleteDoc we mark it deleted or we deleteDoc. 
-      // Actually let's deleteDoc directly.
-      await import('firebase/firestore').then(({ deleteDoc }) => deleteDoc(doc(db, 'social_posts', postId)));
+      await deleteDoc(doc(db, 'social_posts', postId));
       toast.success('Postingan dihapus');
-    } catch (error) {
-      toast.error('Gagal menghapus postingan');
+    } catch (error: any) {
+      console.error("Gagal hapus:", error);
+      toast.error('Gagal menghapus postingan: ' + (error.message || 'Error tidak diketahui'));
     }
   };
 

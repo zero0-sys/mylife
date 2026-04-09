@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { collection, query, where, onSnapshot, addDoc, updateDoc, doc } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, addDoc, updateDoc, doc, deleteDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useStore } from '../store/useStore';
 import { format } from 'date-fns';
@@ -131,13 +131,11 @@ export function SocialProfile() {
   const handleDeletePost = async (postId: string) => {
     if (!confirm('Hapus postingan ini?')) return;
     try {
-      await updateDoc(doc(db, 'social_posts', postId), {
-        isDeleted: true
-      });
-      await import('firebase/firestore').then(({ deleteDoc }) => deleteDoc(doc(db, 'social_posts', postId)));
+      await deleteDoc(doc(db, 'social_posts', postId));
       toast.success('Postingan dihapus');
-    } catch (error) {
-      toast.error('Gagal menghapus postingan');
+    } catch (error: any) {
+      console.error("Gagal hapus:", error);
+      toast.error('Gagal menghapus postingan: ' + (error.message || 'Error tidak diketahui'));
     }
   };
 
@@ -467,6 +465,7 @@ export function SocialProfile() {
         content,
         mediaUrl: mediaUrl || null,
         mediaType: mediaType || null,
+        likedBy: [],
         likesCount,
         viewersCount,
         createdAt: new Date().toISOString(),

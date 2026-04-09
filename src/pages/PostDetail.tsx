@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { doc, onSnapshot, collection, query, where, addDoc, updateDoc } from 'firebase/firestore';
+import { doc, onSnapshot, collection, query, where, addDoc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useStore } from '../store/useStore';
 import { format } from 'date-fns';
 import { id } from 'date-fns/locale';
 import toast from 'react-hot-toast';
-import { Heart, ArrowLeft, Send, Expand, Maximize2, X, Eye } from 'lucide-react';
+import { Heart, ArrowLeft, Send, Expand, Maximize2, X, Eye, Trash2 } from 'lucide-react';
 
 export function PostDetail({ postId }: { postId: string }) {
   const { user, setViewPostId } = useStore();
@@ -64,8 +64,21 @@ export function PostDetail({ postId }: { postId: string }) {
         likedBy: newLikedBy,
         likesCount: newLikedBy.length
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Gagal like", error);
+      toast.error('Gagal menyukai: ' + (error.message || 'Error tidak diketahui'));
+    }
+  };
+
+  const handleDeletePost = async () => {
+    if (!confirm('Hapus postingan ini?')) return;
+    try {
+      await deleteDoc(doc(db, 'social_posts', postId));
+      toast.success('Postingan dihapus');
+      setViewPostId(null);
+    } catch (error: any) {
+      console.error("Gagal hapus:", error);
+      toast.error('Gagal menghapus postingan: ' + (error.message || 'Error tidak diketahui'));
     }
   };
 
@@ -131,6 +144,15 @@ export function PostDetail({ postId }: { postId: string }) {
                 : 'Baru saja'}
             </p>
           </div>
+          {user?.uid === post.userId && (
+            <button 
+              onClick={handleDeletePost}
+              className="ml-auto p-3 bg-red-500/20 text-red-500 rounded-2xl hover:bg-red-500/30 transition-colors"
+              title="Hapus Postingan"
+            >
+              <Trash2 size={20} />
+            </button>
+          )}
         </div>
         
         {/* Post Content */}

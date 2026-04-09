@@ -19,9 +19,10 @@ import { SocialProfile } from './pages/SocialProfile';
 import { SocialFeed } from './pages/SocialFeed';
 import { Chat } from './pages/Chat';
 import { SherlyAI } from './pages/SherlyAI';
+import { PostDetail } from './pages/PostDetail';
 
 export default function App() {
-  const { user, setUser, isAuthReady, setAuthReady, activeTab } = useStore();
+  const { user, setUser, isAuthReady, setAuthReady, activeTab, viewPostId } = useStore();
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
@@ -70,6 +71,10 @@ export default function App() {
   }
 
   const renderContent = () => {
+    if (viewPostId) {
+      return <PostDetail postId={viewPostId} />;
+    }
+
     switch (activeTab) {
       case 'dashboard': return <Dashboard />;
       case 'finance': return <Finance />;

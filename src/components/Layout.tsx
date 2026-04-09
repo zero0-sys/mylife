@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { LayoutDashboard, Wallet, Timer, StickyNote, UserCircle, CalendarDays, Users, Newspaper, BotMessageSquare, LogOut, Shield, Briefcase, Gamepad2, Quote, MessageCircleCode, Trash2, AlertTriangle } from 'lucide-react';
 import { useStore } from '../store/useStore';
 import { logout, db } from '../firebase';
-import { collection, query, where, getDocs, deleteDoc, doc } from 'firebase/firestore';
+import { collection, query, where, getDocs, deleteDoc, doc, getDoc } from 'firebase/firestore';
 import toast from 'react-hot-toast';
 
 const tabs = [
@@ -24,6 +24,39 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const { activeTab, setActiveTab, user } = useStore();
   const [isResetModalOpen, setIsResetModalOpen] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
+  const [isPortofolioPinOpen, setIsPortofolioPinOpen] = useState(false);
+  const [portofolioPinInput, setPortofolioPinInput] = useState('');
+  const [isCheckingPin, setIsCheckingPin] = useState(false);
+
+  const handlePortofolioClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (!user) {
+      toast.error('Anda harus login terlebih dahulu');
+      return;
+    }
+    setIsPortofolioPinOpen(true);
+  };
+
+  const verifyPortofolioPin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user) return;
+    setIsCheckingPin(true);
+    try {
+      const userDoc = await getDoc(doc(db, 'users', user.uid));
+      if (userDoc.exists() && userDoc.data().pinHash === portofolioPinInput) {
+        toast.success('Akses Diberikan');
+        setIsPortofolioPinOpen(false);
+        setPortofolioPinInput('');
+        window.open('https://naufalstudio.netlify.app/', '_blank', 'noopener,noreferrer');
+      } else {
+        toast.error('PIN Salah');
+      }
+    } catch (error) {
+      toast.error('Gagal memverifikasi PIN');
+    } finally {
+      setIsCheckingPin(false);
+    }
+  };
 
   const handleResetData = async () => {
     if (!user) return;
@@ -91,9 +124,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <a href="https://cyber-security-sherly.netlify.app/" target="_blank" rel="noopener noreferrer" title="Cyber Security" className="flex items-center justify-center p-3 rounded-xl transition-all duration-300 shrink-0 text-slate-400 hover:bg-white/10 hover:text-white">
               <Shield size={20} />
             </a>
-            <a href="https://naufalstudio.netlify.app/" target="_blank" rel="noopener noreferrer" title="Portofolio" className="flex items-center justify-center p-3 rounded-xl transition-all duration-300 shrink-0 text-slate-400 hover:bg-white/10 hover:text-white">
+            <button onClick={handlePortofolioClick} title="Portofolio" className="flex items-center justify-center p-3 rounded-xl transition-all duration-300 shrink-0 text-slate-400 hover:bg-white/10 hover:text-white">
               <Briefcase size={20} />
-            </a>
+            </button>
             <a href="https://deteksi-kekacauan-neuron.netlify.app/" target="_blank" rel="noopener noreferrer" title="Game Neuron" className="flex items-center justify-center p-3 rounded-xl transition-all duration-300 shrink-0 text-slate-400 hover:bg-white/10 hover:text-white">
               <Gamepad2 size={20} />
             </a>
@@ -192,6 +225,53 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 )}
               </button>
             </div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Portofolio PIN Modal */}
+      {isPortofolioPinOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-[#111] border border-white/10 p-6 rounded-3xl max-w-sm w-full shadow-2xl text-center"
+          >
+            <div className="w-16 h-16 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Shield className="text-blue-400" size={32} />
+            </div>
+            <h3 className="text-xl font-bold text-white mb-2">Akses Portofolio</h3>
+            <p className="text-slate-400 mb-6 text-sm">
+              Masukkan PIN yang sama dengan PIN keamanan catatanmu.
+            </p>
+            <form onSubmit={verifyPortofolioPin} className="space-y-4">
+              <input
+                type="password"
+                value={portofolioPinInput}
+                onChange={(e) => setPortofolioPinInput(e.target.value)}
+                className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-center text-2xl tracking-[0.5em] text-white focus:outline-none focus:border-blue-500 transition-colors"
+                placeholder="••••"
+                maxLength={6}
+                autoFocus
+              />
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => { setIsPortofolioPinOpen(false); setPortofolioPinInput(''); }}
+                  disabled={isCheckingPin}
+                  className="flex-1 px-4 py-3 rounded-xl font-medium bg-white/10 hover:bg-white/20 text-white transition-colors disabled:opacity-50"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  disabled={isCheckingPin || !portofolioPinInput}
+                  className="flex-1 bg-blue-500 hover:bg-blue-600 text-white font-medium p-3 rounded-xl transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                >
+                  {isCheckingPin ? 'Memeriksa...' : 'Buka Kunci'}
+                </button>
+              </div>
+            </form>
           </motion.div>
         </div>
       )}

@@ -6,16 +6,15 @@ import { useStore } from '../store/useStore';
 import { format } from 'date-fns';
 import { id } from 'date-fns/locale';
 import toast from 'react-hot-toast';
-import { Heart, MessageCircle, Send, Filter, X, Maximize2, Eye } from 'lucide-react';
+import { Heart, MessageCircle, Send, Filter, X, Maximize2, Eye, Trash2 } from 'lucide-react';
 
 export function SocialFeed() {
-  const { user } = useStore();
+  const { user, setViewPostId } = useStore();
   const [posts, setPosts] = useState<any[]>([]);
   const [comments, setComments] = useState<Record<string, any[]>>({});
   const [newComment, setNewComment] = useState<Record<string, string>>({});
   const [expandedComments, setExpandedComments] = useState<Record<string, boolean>>({});
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
-  const [selectedPost, setSelectedPost] = useState<any | null>(null);
 
   const postsRef = useRef(posts);
 
@@ -76,13 +75,37 @@ export function SocialFeed() {
     // No-op
   }, []);
 
-  const handleLike = async (postId: string, currentLikes: number) => {
+  const handleLike = async (post: any) => {
+    if (!user) return;
     try {
-      await updateDoc(doc(db, 'social_posts', postId), {
-        likesCount: currentLikes + 1
+      const likedBy = post.likedBy || [];
+      let newLikedBy = [...likedBy];
+      if (newLikedBy.includes(user.uid)) {
+        newLikedBy = newLikedBy.filter((uid: string) => uid !== user.uid);
+      } else {
+        newLikedBy.push(user.uid);
+      }
+      await updateDoc(doc(db, 'social_posts', post.id), {
+        likedBy: newLikedBy,
+        likesCount: newLikedBy.length
       });
     } catch (error) {
       console.error("Gagal like", error);
+    }
+  };
+
+  const handleDeletePost = async (postId: string) => {
+    if (!confirm('Hapus postingan ini?')) return;
+    try {
+      await updateDoc(doc(db, 'social_posts', postId), {
+        isDeleted: true
+      });
+      // Instead of actual deleteDoc we mark it deleted or we deleteDoc. 
+      // Actually let's deleteDoc directly.
+      await import('firebase/firestore').then(({ deleteDoc }) => deleteDoc(doc(db, 'social_posts', postId)));
+      toast.success('Postingan dihapus');
+    } catch (error) {
+      toast.error('Gagal menghapus postingan');
     }
   };
 
@@ -108,12 +131,24 @@ export function SocialFeed() {
     }
   };
 
-  const renderPost = (post: any, isDetail = false) => (
+  const renderPost = (post: any, isDetail = false) => {
+    const hasLiked = post.likedBy?.includes(user?.uid);
+    const likesDisplay = post.likedBy ? post.likedBy.length : (post.likesCount || 0);
+
+    return (
     <div 
       key={post.id} 
-      className={`bg-white/5 backdrop-blur-md border border-white/10 p-5 rounded-3xl transition-all ${!isDetail ? 'hover:bg-white/10 cursor-pointer' : ''}`}
-      onClick={() => !isDetail && setSelectedPost(post)}
+      className={`bg-white/5 backdrop-blur-md border border-white/10 p-5 rounded-3xl transition-all ${!isDetail ? 'hover:bg-white/10 cursor-pointer' : ''} group relative`}
+      onClick={() => !isDetail && setViewPostId(post.id)}
     >
+      {user?.uid === post.userId && (
+        <button 
+          onClick={(e) => { e.stopPropagation(); handleDeletePost(post.id); }}
+          className="absolute top-4 right-4 p-2 bg-red-500/20 text-red-500 rounded-lg hover:bg-red-500/40 transition-colors opacity-0 group-hover:opacity-100"
+        >
+          <Trash2 size={16} />
+        </button>
+      )}
       <div className="flex items-center gap-3 mb-4">
         <img src={post.authorPhoto || 'https://via.placeholder.com/40'} alt="Author" className="w-10 h-10 rounded-full" referrerPolicy="no-referrer" />
         <div>
@@ -168,16 +203,16 @@ export function SocialFeed() {
         <button 
           onClick={(e) => {
             e.stopPropagation();
-            handleLike(post.id, post.likesCount || 0);
+            handleLike(post);
           }}
-          className="flex items-center gap-1 hover:text-red-400 transition-colors"
+          className={`flex items-center gap-1 hover:text-red-400 transition-colors ${hasLiked ? 'text-red-400' : ''}`}
         >
-          <Heart size={18} className={(post.likesCount || 0) > 0 ? 'fill-red-400 text-red-400' : ''} />
-          <span className="text-sm">{(post.likesCount || 0).toLocaleString()}</span>
+          <Heart size={18} className={hasLiked ? 'fill-red-400 text-red-400' : ''} />
+          <span className="text-sm">{likesDisplay.toLocaleString()}</span>
         </button>
         <div className="flex items-center gap-1">
           <Eye size={18} />
-          <span className="text-sm">{(post.viewersCount || (post.likesCount || 0) + 123).toLocaleString()}</span>
+          <span className="text-sm">{(post.viewersCount || (likesDisplay) + 123).toLocaleString()}</span>
         </div>
         <button 
           onClick={(e) => {
@@ -234,7 +269,7 @@ export function SocialFeed() {
         </div>
       )}
     </div>
-  );
+  )};
 
   return (
     <motion.div
@@ -277,36 +312,6 @@ export function SocialFeed() {
               className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
               referrerPolicy="no-referrer"
             />
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Post Detail Modal */}
-      <AnimatePresence>
-        {selectedPost && (
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[90] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
-            onClick={() => setSelectedPost(null)}
-          >
-            <motion.div 
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              className="w-full max-w-2xl max-h-[90vh] overflow-y-auto hide-scrollbar"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="flex justify-end mb-2">
-                <button 
-                  onClick={() => setSelectedPost(null)}
-                  className="p-2 bg-white/10 rounded-full text-white hover:bg-white/20 transition-colors"
-                >
-                  <X size={20} />
-                </button>
-              </div>
-              {renderPost(selectedPost, true)}
-            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>

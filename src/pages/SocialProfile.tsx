@@ -6,10 +6,10 @@ import { useStore } from '../store/useStore';
 import { format } from 'date-fns';
 import { id } from 'date-fns/locale';
 import toast from 'react-hot-toast';
-import { Edit2, Image as ImageIcon, Link as LinkIcon, Heart, MessageCircle, Gift, Upload, Video, GraduationCap, Briefcase, Cake, Camera, X, Circle, StopCircle, Maximize2, Send, Eye } from 'lucide-react';
+import { Edit2, Image as ImageIcon, Link as LinkIcon, Heart, MessageCircle, Gift, Upload, Video, GraduationCap, Briefcase, Cake, Camera, X, Circle, StopCircle, Maximize2, Send, Eye, Trash2 } from 'lucide-react';
 
 export function SocialProfile() {
-  const { user } = useStore();
+  const { user, setViewPostId } = useStore();
   const [profile, setProfile] = useState<any>(null);
   const [posts, setPosts] = useState<any[]>([]);
   const [comments, setComments] = useState<Record<string, any[]>>({});
@@ -24,6 +24,7 @@ export function SocialProfile() {
   const [birthday, setBirthday] = useState('');
   const [coverURL, setCoverURL] = useState('');
   const [danaKagetLink, setDanaKagetLink] = useState('');
+  const [photoURL, setPhotoURL] = useState('');
 
   // New Post State
   const [content, setContent] = useState('');
@@ -58,6 +59,7 @@ export function SocialProfile() {
         setBirthday(data.birthday || '');
         setCoverURL(data.coverURL || '');
         setDanaKagetLink(data.danaKagetLink || '');
+        setPhotoURL(data.photoURL || '');
       }
     });
 
@@ -107,13 +109,35 @@ export function SocialProfile() {
     };
   }, [user]);
 
-  const handleLike = async (postId: string, currentLikes: number) => {
+  const handleLike = async (post: any) => {
+    if (!user) return;
     try {
-      await updateDoc(doc(db, 'social_posts', postId), {
-        likesCount: currentLikes + 1
+      const likedBy = post.likedBy || [];
+      let newLikedBy = [...likedBy];
+      if (newLikedBy.includes(user.uid)) {
+        newLikedBy = newLikedBy.filter((uid: string) => uid !== user.uid);
+      } else {
+        newLikedBy.push(user.uid);
+      }
+      await updateDoc(doc(db, 'social_posts', post.id), {
+        likedBy: newLikedBy,
+        likesCount: newLikedBy.length
       });
     } catch (error) {
       console.error("Gagal like", error);
+    }
+  };
+
+  const handleDeletePost = async (postId: string) => {
+    if (!confirm('Hapus postingan ini?')) return;
+    try {
+      await updateDoc(doc(db, 'social_posts', postId), {
+        isDeleted: true
+      });
+      await import('firebase/firestore').then(({ deleteDoc }) => deleteDoc(doc(db, 'social_posts', postId)));
+      toast.success('Postingan dihapus');
+    } catch (error) {
+      toast.error('Gagal menghapus postingan');
     }
   };
 
@@ -139,12 +163,24 @@ export function SocialProfile() {
     }
   };
 
-  const renderPost = (post: any, isDetail = false) => (
+  const renderPost = (post: any, isDetail = false) => {
+    const hasLiked = post.likedBy?.includes(user?.uid);
+    const likesDisplay = post.likedBy ? post.likedBy.length : (post.likesCount || 0);
+
+    return (
     <div 
       key={post.id} 
-      className={`bg-white/5 backdrop-blur-md border border-white/10 p-5 rounded-3xl transition-all ${!isDetail ? 'hover:bg-white/10 cursor-pointer' : ''}`}
-      onClick={() => !isDetail && setSelectedPost(post)}
+      className={`bg-white/5 backdrop-blur-md border border-white/10 p-5 rounded-3xl transition-all ${!isDetail ? 'hover:bg-white/10 cursor-pointer' : ''} group relative`}
+      onClick={() => !isDetail && setViewPostId(post.id)}
     >
+      {user?.uid === post.userId && (
+         <button 
+           onClick={(e) => { e.stopPropagation(); handleDeletePost(post.id); }}
+           className="absolute top-4 right-4 p-2 bg-red-500/20 text-red-500 rounded-lg hover:bg-red-500/40 transition-colors opacity-0 group-hover:opacity-100"
+         >
+           <Trash2 size={16} />
+         </button>
+      )}
       <div className="flex items-center gap-3 mb-4">
         <img src={post.authorPhoto || 'https://via.placeholder.com/40'} alt="Author" className="w-10 h-10 rounded-full" referrerPolicy="no-referrer" />
         <div>
@@ -199,16 +235,16 @@ export function SocialProfile() {
         <button 
           onClick={(e) => {
             e.stopPropagation();
-            handleLike(post.id, post.likesCount || 0);
+            handleLike(post);
           }}
-          className="flex items-center gap-1 hover:text-red-400 transition-colors"
+          className={`flex items-center gap-1 hover:text-red-400 transition-colors ${hasLiked ? 'text-red-400' : ''}`}
         >
-          <Heart size={18} className={(post.likesCount || 0) > 0 ? 'fill-red-400 text-red-400' : ''} />
-          <span className="text-sm">{(post.likesCount || 0).toLocaleString()}</span>
+          <Heart size={18} className={hasLiked ? 'fill-red-400 text-red-400' : ''} />
+          <span className="text-sm">{likesDisplay.toLocaleString()}</span>
         </button>
         <div className="flex items-center gap-1">
           <Eye size={18} />
-          <span className="text-sm">{(post.viewersCount || (post.likesCount || 0) + 123).toLocaleString()}</span>
+          <span className="text-sm">{(post.viewersCount || (likesDisplay) + 123).toLocaleString()}</span>
         </div>
         <button 
           onClick={(e) => {
@@ -265,7 +301,7 @@ export function SocialProfile() {
         </div>
       )}
     </div>
-  );
+  )};
 
   const startCamera = async () => {
     try {
@@ -365,7 +401,7 @@ export function SocialProfile() {
     if (!user) return;
     try {
       await updateDoc(doc(db, 'users', user.uid), {
-        bio, school, work, birthday, coverURL, danaKagetLink
+        bio, school, work, birthday, coverURL, danaKagetLink, photoURL
       });
       setIsEditing(false);
       toast.success('Profil diperbarui!');
@@ -476,12 +512,7 @@ export function SocialProfile() {
               referrerPolicy="no-referrer"
             />
           ) : (
-            <img 
-              src="https://images.alphacoders.com/605/605592.png" 
-              alt="Default Naruto Cover" 
-              className="w-full h-full object-cover opacity-60 transition-transform duration-700 group-hover:scale-105"
-              referrerPolicy="no-referrer"
-            />
+            <div className="w-full h-full bg-slate-950 transition-transform duration-700 group-hover:scale-105"></div>
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-transparent to-transparent" />
           
@@ -508,7 +539,7 @@ export function SocialProfile() {
         <div className="px-6 pb-6 relative">
           <div className="flex justify-between items-end -mt-16 mb-4">
             <img 
-              src={user?.photoURL || 'https://via.placeholder.com/100'} 
+              src={profile?.photoURL || user?.photoURL || 'https://via.placeholder.com/100'} 
               alt="Profile" 
               className="w-32 h-32 rounded-full border-4 border-slate-900 object-cover bg-slate-800"
               referrerPolicy="no-referrer"
@@ -539,6 +570,10 @@ export function SocialProfile() {
                 <div>
                   <label className="block text-sm text-slate-400 mb-1">Tanggal Lahir</label>
                   <input type="date" value={birthday} onChange={e => setBirthday(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl p-2 text-white" />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-sm text-slate-400 mb-1">URL Foto Profil</label>
+                  <input type="url" value={photoURL} onChange={e => setPhotoURL(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl p-2 text-white" placeholder="https://..." />
                 </div>
                 <div className="md:col-span-2">
                   <label className="block text-sm text-slate-400 mb-1">URL Foto Sampul</label>
@@ -711,37 +746,6 @@ export function SocialProfile() {
               referrerPolicy="no-referrer"
               onClick={(e) => e.stopPropagation()}
             />
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Post Detail Modal */}
-      <AnimatePresence>
-        {selectedPost && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[105] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
-            onClick={() => setSelectedPost(null)}
-          >
-            <motion.div
-              initial={{ scale: 0.9, y: 20 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.9, y: 20 }}
-              className="bg-slate-900 w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl border border-white/10"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="sticky top-0 bg-slate-900/80 backdrop-blur-md p-4 border-b border-white/10 flex justify-between items-center z-10">
-                <h3 className="font-bold">Postingan</h3>
-                <button onClick={() => setSelectedPost(null)} className="p-2 hover:bg-white/10 rounded-full transition-colors">
-                  <X size={20} />
-                </button>
-              </div>
-              <div className="p-4">
-                {renderPost(selectedPost, true)}
-              </div>
-            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>

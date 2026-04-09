@@ -10,6 +10,8 @@ interface AppState {
   setActiveTab: (tab: string) => void;
   pinUnlocked: boolean;
   setPinUnlocked: (unlocked: boolean) => void;
+  viewPostId: string | null;
+  setViewPostId: (id: string | null) => void;
 }
 
 export const useStore = create<AppState>((set) => ({
@@ -21,4 +23,6 @@ export const useStore = create<AppState>((set) => ({
   setActiveTab: (tab) => set({ activeTab: tab }),
   pinUnlocked: false,
   setPinUnlocked: (unlocked) => set({ pinUnlocked: unlocked }),
+  viewPostId: null,
+  setViewPostId: (id) => set({ viewPostId: id }),
 }));

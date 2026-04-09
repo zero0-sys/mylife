@@ -112,7 +112,8 @@ export function PostDetail({ postId }: { postId: string }) {
   }
 
   const hasLiked = post.likedBy?.includes(user?.uid);
-  const likesDisplay = post.likedBy ? post.likedBy.length : (post.likesCount || 0);
+  const likesDisplay = post.likedBy ? post.likedBy.length : 0;
+  const viewersDisplay = post.likedBy ? (post.viewersCount || 0) : 0;
 
   return (
     <motion.div
@@ -204,7 +205,7 @@ export function PostDetail({ postId }: { postId: string }) {
           </button>
           <div className="flex items-center gap-2 text-slate-400">
             <Eye size={24} />
-            <span className="font-bold text-lg">{(post.viewersCount || 0).toLocaleString()}</span>
+            <span className="font-bold text-lg">{viewersDisplay.toLocaleString()}</span>
           </div>
         </div>
 

@@ -163,7 +163,8 @@ export function SocialProfile() {
 
   const renderPost = (post: any, isDetail = false) => {
     const hasLiked = post.likedBy?.includes(user?.uid);
-    const likesDisplay = post.likedBy ? post.likedBy.length : (post.likesCount || 0);
+    const likesDisplay = post.likedBy ? post.likedBy.length : 0;
+    const viewersDisplay = post.likedBy ? (post.viewersCount || 0) : 0;
 
     return (
     <div 
@@ -242,7 +243,7 @@ export function SocialProfile() {
         </button>
         <div className="flex items-center gap-1">
           <Eye size={18} />
-          <span className="text-sm">{(post.viewersCount || 0).toLocaleString()}</span>
+          <span className="text-sm">{viewersDisplay.toLocaleString()}</span>
         </div>
         <button 
           onClick={(e) => {
@@ -472,9 +473,9 @@ export function SocialProfile() {
       setMediaType('');
 
       // Bot interaction removed
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error creating post:", error);
-      toast.error('Gagal membagikan status. Mungkin ukuran file terlalu besar.');
+      toast.error('Gagal membagikan status: ' + (error.message || 'Ukuran file mungkin terlalu besar atau masalah izin.'));
     } finally {
       setIsSubmitting(false);
     }

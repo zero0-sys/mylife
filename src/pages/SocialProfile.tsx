@@ -1,8 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { collection, query, where, onSnapshot, addDoc, updateDoc, doc, deleteDoc } from 'firebase/firestore';
-import { updateProfile } from 'firebase/auth';
-import { db, auth } from '../firebase';
+import { db } from '../firebase';
 import { useStore } from '../store/useStore';
 import { format } from 'date-fns';
 import { id } from 'date-fns/locale';
@@ -19,7 +18,6 @@ export function SocialProfile() {
   
   // Edit Profile State
   const [isEditing, setIsEditing] = useState(false);
-  const [username, setUsername] = useState(user?.displayName || '');
   const [bio, setBio] = useState('');
   const [school, setSchool] = useState('');
   const [work, setWork] = useState('');
@@ -63,7 +61,6 @@ export function SocialProfile() {
         setDanaKagetLink(data.danaKagetLink || '');
         setPhotoURL(data.photoURL || '');
       }
-      setUsername(user.displayName || '');
     });
 
     // Posts listener
@@ -417,16 +414,13 @@ export function SocialProfile() {
     e.preventDefault();
     if (!user) return;
     try {
-      if (auth.currentUser && username !== auth.currentUser.displayName) {
-        await updateProfile(auth.currentUser, { displayName: username });
-      }
       await updateDoc(doc(db, 'users', user.uid), {
         bio, school, work, birthday, coverURL, danaKagetLink, photoURL
       });
       setIsEditing(false);
       toast.success('Profil diperbarui!');
-    } catch (error: any) {
-      toast.error('Gagal memperbarui profil: ' + error.message);
+    } catch (error) {
+      toast.error('Gagal memperbarui profil.');
     }
   };
 
@@ -516,113 +510,112 @@ export function SocialProfile() {
       className="space-y-6 w-full"
     >
       {/* Profile Header */}
-      <div className="bg-white/5 backdrop-blur-md border border-white/10 sm:rounded-3xl p-4 md:p-8">
-        
-        {isBirthdayToday() && (
-          <div className="mb-6 p-4 rounded-2xl bg-gradient-to-r from-yellow-600/40 to-fuchsia-600/40 border border-yellow-500/30 text-center animate-pulse">
-            <h2 className="text-xl font-bold text-yellow-400 mb-2">🎉 Selamat Ulang Tahun! 🎉</h2>
-            {profile?.danaKagetLink && (
-              <a 
-                href={profile.danaKagetLink} 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white px-4 py-1.5 text-sm rounded-full font-bold transition-colors"
-              >
-                <Gift size={16} /> Ambil Hadiah Dana Kaget!
-              </a>
-            )}
-          </div>
-        )}
-
-        <div className="flex items-center gap-4 md:gap-8 mb-6">
-          <div className="flex-shrink-0">
-            <div className="w-20 h-20 md:w-32 md:h-32 rounded-full p-1 bg-gradient-to-tr from-yellow-400 to-fuchsia-600">
-              <img 
-                src={profile?.photoURL || user?.photoURL || 'https://via.placeholder.com/150'} 
-                alt="Profile" 
-                className="w-full h-full rounded-full border-4 border-black object-cover bg-slate-800"
-                referrerPolicy="no-referrer"
-              />
+      <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-3xl overflow-hidden">
+        {/* Cover Photo */}
+        <div className="h-64 bg-slate-800 relative group">
+          {profile?.coverURL ? (
+            <img 
+              src={profile.coverURL} 
+              alt="Cover" 
+              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" 
+              referrerPolicy="no-referrer"
+            />
+          ) : (
+            <div className="w-full h-full bg-slate-950 transition-transform duration-700 group-hover:scale-105"></div>
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-transparent to-transparent" />
+          
+          {isBirthdayToday() && (
+            <div className="absolute inset-0 bg-black/50 flex items-center justify-center backdrop-blur-sm">
+              <div className="text-center animate-bounce">
+                <h2 className="text-4xl font-bold text-yellow-400 mb-2">🎉 Selamat Ulang Tahun! 🎉</h2>
+                {profile?.danaKagetLink && (
+                  <a 
+                    href={profile.danaKagetLink} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-full font-bold transition-colors"
+                  >
+                    <Gift size={20} /> Ambil Hadiah Dana Kaget!
+                  </a>
+                )}
+              </div>
             </div>
-          </div>
-          <div className="flex-1">
-            <div className="flex flex-col md:flex-row md:items-center gap-3 md:gap-6 mb-4">
-              <h2 className="text-xl md:text-2xl font-semibold">{user?.displayName}</h2>
-              <button 
-                onClick={() => setIsEditing(!isEditing)}
-                className="bg-white/10 hover:bg-white/20 px-4 py-1.5 rounded-lg text-sm font-semibold transition-colors w-fit"
-              >
-                Edit Profil
-              </button>
-            </div>
-            <div className="hidden md:flex gap-6 text-sm">
-              <div><span className="font-bold">{posts.length}</span> kiriman</div>
-              <div><span className="font-bold">0</span> pengikut</div>
-              <div><span className="font-bold">0</span> diikuti</div>
-            </div>
-          </div>
-        </div>
-
-        <div className="text-sm">
-          <div className="font-bold mb-1">{user?.displayName}</div>
-          {profile?.bio && <p className="text-slate-200 whitespace-pre-wrap">{profile.bio}</p>}
-          <div className="flex flex-col gap-1 mt-2 text-slate-400">
-            {profile?.school && <span className="flex items-center gap-2"><GraduationCap size={14} className="text-blue-400" /> {profile.school}</span>}
-            {profile?.work && <span className="flex items-center gap-2"><Briefcase size={14} className="text-emerald-400" /> {profile.work}</span>}
-            {profile?.birthday && !isNaN(new Date(profile.birthday).getTime()) && (
-              <span className="flex items-center gap-2">
-                <Cake size={14} className="text-pink-400" /> 
-                {format(new Date(profile.birthday), 'dd MMMM yyyy', { locale: id })}
-              </span>
-            )}
-          </div>
-        </div>
-
-        <div className="flex md:hidden justify-around border-t border-white/10 mt-6 pt-4 text-sm text-center">
-          <div><div className="font-bold">{posts.length}</div><div className="text-slate-400">kiriman</div></div>
-          <div><div className="font-bold">0</div><div className="text-slate-400">pengikut</div></div>
-          <div><div className="font-bold">0</div><div className="text-slate-400">diikuti</div></div>
+          )}
         </div>
         
-        {isEditing && (
-          <form onSubmit={handleSaveProfile} className="space-y-4 bg-black/30 p-4 rounded-xl mt-6 border border-white/5">
-            <h3 className="font-bold mb-2">Edit Profil</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs text-slate-400 mb-1">Nama Pengguna (Username)</label>
-                <input type="text" value={username} onChange={e => setUsername(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-lg p-2 text-white text-sm" />
+        {/* Profile Info */}
+        <div className="px-6 pb-6 relative">
+          <div className="flex justify-between items-end -mt-16 mb-4">
+            <img 
+              src={profile?.photoURL || user?.photoURL || 'https://via.placeholder.com/100'} 
+              alt="Profile" 
+              className="w-32 h-32 rounded-full border-4 border-slate-900 object-cover bg-slate-800"
+              referrerPolicy="no-referrer"
+            />
+            <button 
+              onClick={() => setIsEditing(!isEditing)}
+              className="bg-white/10 hover:bg-white/20 p-2 rounded-xl transition-colors"
+            >
+              <Edit2 size={20} />
+            </button>
+          </div>
+          
+          {isEditing ? (
+            <form onSubmit={handleSaveProfile} className="space-y-4 bg-black/20 p-4 rounded-2xl mt-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm text-slate-400 mb-1">Bio</label>
+                  <input type="text" value={bio} onChange={e => setBio(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl p-2 text-white" />
+                </div>
+                <div>
+                  <label className="block text-sm text-slate-400 mb-1">Sekolah/Kampus</label>
+                  <input type="text" value={school} onChange={e => setSchool(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl p-2 text-white" />
+                </div>
+                <div>
+                  <label className="block text-sm text-slate-400 mb-1">Pekerjaan</label>
+                  <input type="text" value={work} onChange={e => setWork(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl p-2 text-white" />
+                </div>
+                <div>
+                  <label className="block text-sm text-slate-400 mb-1">Tanggal Lahir</label>
+                  <input type="date" value={birthday} onChange={e => setBirthday(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl p-2 text-white" />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-sm text-slate-400 mb-1">URL Foto Profil</label>
+                  <input type="url" value={photoURL} onChange={e => setPhotoURL(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl p-2 text-white" placeholder="https://..." />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-sm text-slate-400 mb-1">URL Foto Sampul</label>
+                  <input type="url" value={coverURL} onChange={e => setCoverURL(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl p-2 text-white" placeholder="https://..." />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-sm text-slate-400 mb-1">Link Dana Kaget (Hadiah Ultah)</label>
+                  <input type="url" value={danaKagetLink} onChange={e => setDanaKagetLink(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl p-2 text-white" placeholder="https://link.dana.id/kaget?..." />
+                </div>
               </div>
-              <div>
-                <label className="block text-xs text-slate-400 mb-1">Bio</label>
-                <input type="text" value={bio} onChange={e => setBio(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-lg p-2 text-white text-sm" />
+              <div className="flex justify-end gap-2">
+                <button type="button" onClick={() => setIsEditing(false)} className="px-4 py-2 rounded-xl bg-white/10">Batal</button>
+                <button type="submit" className="px-4 py-2 rounded-xl bg-blue-500">Simpan</button>
               </div>
-              <div>
-                <label className="block text-xs text-slate-400 mb-1">Sekolah/Kampus</label>
-                <input type="text" value={school} onChange={e => setSchool(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-lg p-2 text-white text-sm" />
-              </div>
-              <div>
-                <label className="block text-xs text-slate-400 mb-1">Pekerjaan</label>
-                <input type="text" value={work} onChange={e => setWork(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-lg p-2 text-white text-sm" />
-              </div>
-              <div>
-                <label className="block text-xs text-slate-400 mb-1">Tanggal Lahir</label>
-                <input type="date" value={birthday} onChange={e => setBirthday(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-lg p-2 text-white text-sm" />
-              </div>
-              <div>
-                <label className="block text-xs text-slate-400 mb-1">URL Foto Profil</label>
-                <input type="url" value={photoURL} onChange={e => setPhotoURL(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-lg p-2 text-white text-sm" placeholder="https://..." />
-              </div>
-              <div className="md:col-span-2">
-                <label className="block text-xs text-slate-400 mb-1">Link Dana Kaget (Hadiah Ultah)</label>
-                <input type="url" value={danaKagetLink} onChange={e => setDanaKagetLink(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-lg p-2 text-white text-sm" placeholder="https://link.dana.id/kaget?..." />
+            </form>
+          ) : (
+            <div>
+              <h2 className="text-3xl font-bold">{user?.displayName}</h2>
+              {profile?.bio && <p className="text-slate-300 mt-2 text-lg">{profile.bio}</p>}
+              
+              <div className="flex flex-wrap gap-6 mt-6 text-sm text-slate-400">
+                {profile?.school && <span className="flex items-center gap-2"><GraduationCap size={18} className="text-blue-400" /> {profile.school}</span>}
+                {profile?.work && <span className="flex items-center gap-2"><Briefcase size={18} className="text-emerald-400" /> {profile.work}</span>}
+                {profile?.birthday && !isNaN(new Date(profile.birthday).getTime()) && (
+                  <span className="flex items-center gap-2">
+                    <Cake size={18} className="text-pink-400" /> 
+                    {format(new Date(profile.birthday), 'dd MMMM yyyy', { locale: id })}
+                  </span>
+                )}
               </div>
             </div>
-            <div className="flex justify-end gap-2 mt-4">
-              <button type="button" onClick={() => setIsEditing(false)} className="px-4 py-2 rounded-lg bg-white/10 text-sm font-semibold">Batal</button>
-              <button type="submit" className="px-4 py-2 rounded-lg bg-blue-500 text-sm font-semibold text-white">Simpan Profil</button>
-            </div>
-          </form>
-        )}
+          )}
+        </div>
       </div>
 
       {/* Create Post */}
@@ -731,38 +724,11 @@ export function SocialProfile() {
         )}
       </AnimatePresence>
 
-      {/* Posts Grid */}
-      <div className="border-t border-white/10 pt-4">
-        <h3 className="text-center text-sm font-bold tracking-widest text-slate-400 mb-4 uppercase">Kiriman</h3>
-        <div className="grid grid-cols-3 gap-1 md:gap-2">
-          {posts.map(post => (
-            <div 
-              key={post.id}
-              className="aspect-square bg-zinc-900 cursor-pointer overflow-hidden border border-white/5 relative group"
-              onClick={() => setViewPostId(post.id)}
-            >
-              {post.mediaUrl && (post.mediaType === 'image' || post.mediaType === 'video') ? (
-                post.mediaType === 'image' ? (
-                  <img src={post.mediaUrl} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" referrerPolicy="no-referrer" />
-                ) : (
-                  <video src={post.mediaUrl} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                )
-              ) : (
-                <div className="w-full h-full flex flex-col items-center justify-center p-2 md:p-4 text-center bg-zinc-800 text-slate-300">
-                  <span className="text-[10px] md:text-sm font-medium line-clamp-4 leading-snug">{post.content}</span>
-                </div>
-              )}
-              {/* Overlay with stats on hover */}
-              <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4 text-white">
-                <div className="flex items-center gap-1 font-bold text-sm">
-                  <Heart size={16} className="fill-white" /> <span>{post.likedBy?.length || 0}</span>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
+      {/* Posts List */}
+      <div className="space-y-4">
+        {posts.map(post => renderPost(post))}
         {posts.length === 0 && (
-          <p className="text-center text-slate-400 py-12">Belum ada kiriman.</p>
+          <p className="text-center text-slate-400 py-8">Belum ada postingan.</p>
         )}
       </div>
 

@@ -1,109 +1,70 @@
-<div align="center">
-  <img src="icon.png" alt="MyLife Logo" width="120" />
-  <h1>🐋 MyLife</h1>
-  <p><strong>Catat dan kelola hidupmu dengan lebih baik.</strong></p>
+# MyLife
 
-  <p>
-    <a href="#features"><img src="https://img.shields.io/badge/Features-8-blueviolet?style=for-the-badge" alt="Features" /></a>
-    <a href="#tech-stack"><img src="https://img.shields.io/badge/Stack-React%20%2B%20Firebase-blue?style=for-the-badge&logo=react" alt="Tech Stack" /></a>
-    <a href="#license"><img src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge" alt="License" /></a>
-  </p>
-</div>
+**MyLife** is a comprehensive personal life management system designed to track finances, study sessions, notes, and goals within a centralized dashboard. Built with a modern UI, the application emphasizes productivity, security, and an optimized user experience.
 
 ---
 
-## ✨ About
+## Features
 
-**MyLife** is a modern, all-in-one personal life tracker built with a sleek glassmorphism UI. Track your finances, study sessions, notes, quotes, and more — all in one beautiful dashboard.
-
----
-
-## 🚀 Features
-
-| Feature | Description |
-|---------|-------------|
-| 📊 **Dashboard** | Overview of all your life metrics at a glance |
-| 💰 **Finance Tracker** | Track income & expenses with visual charts |
-| ⏱️ **Study Timer** | Pomodoro-style timer for focused study sessions |
-| 📝 **Private Notes** | PIN-protected personal notes |
-| 💬 **Quotes** | Save and manage your favorite quotes |
-| 🎮 **Character** | Gamified self-improvement tracking |
-| 📅 **360 Days** | Year-long goal & habit tracker |
-| 🤖 **Sherly AI** | Built-in AI assistant powered by Gemini |
+- **Dashboard**: A comprehensive overview of primary life metrics and activities.
+- **Finance Tracker**: A module to track income and expenses equipped with data visualization charts.
+- **Study Timer**: A structured Pomodoro timer to enhance focus and manage study sessions.
+- **Private Notes**: A secure, PIN-protected environment for personal notes.
+- **Social Feed**: A timeline feature to view posts, updates, and interactions.
+- **Social Profile**: User profile management and customizable settings.
+- **Character**: A gamified progression system for self-improvement tracking.
+- **360 Days**: A persistent habit and goal tracker designed for long-term consistency.
 
 ---
 
-## 🛠️ Tech Stack
+## Technology Stack
 
-<div align="center">
+The application leverages a robust modern stack to ensure performance and scalability:
 
-| Technology | Purpose |
-|:---:|:---:|
-| ![React](https://img.shields.io/badge/React-20232A?style=flat-square&logo=react&logoColor=61DAFB) | Frontend Framework |
-| ![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=flat-square&logo=typescript&logoColor=white) | Type Safety |
-| ![Firebase](https://img.shields.io/badge/Firebase-FFCA28?style=flat-square&logo=firebase&logoColor=black) | Auth & Database |
-| ![Vite](https://img.shields.io/badge/Vite-646CFF?style=flat-square&logo=vite&logoColor=white) | Build Tool |
-| ![TailwindCSS](https://img.shields.io/badge/Tailwind-38B2AC?style=flat-square&logo=tailwind-css&logoColor=white) | Styling |
-| ![Framer Motion](https://img.shields.io/badge/Framer_Motion-0055FF?style=flat-square&logo=framer&logoColor=white) | Animations |
-
-</div>
+- **Frontend Framework**: React 18
+- **Language**: TypeScript
+- **Backend & Authentication**: Firebase (Auth, Firestore)
+- **Build Tool**: Vite
+- **Styling**: TailwindCSS
+- **Animations**: Framer Motion
 
 ---
 
-## 📦 Getting Started
+## Getting Started
 
 ### Prerequisites
 
-- **Node.js** v18+
-- **Firebase Project** with Authentication & Firestore enabled
+- Node.js (v18 or later)
+- A Firebase Project with Authentication and Firestore enabled
 
 ### Installation
 
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/zero0-sys/mylife.git
+   cd mylife
+   ```
+
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+3. Configure environment variables:
+   ```bash
+   cp .env.example .env
+   ```
+   *Note: Populate the `.env` file with your specific Firebase configuration values.*
+
+### Running the Application
+
+To start the development server, run:
 ```bash
-# Clone the repository
-git clone https://github.com/zero0-sys/mylife.git
-cd mylife
-
-# Install dependencies
-npm install
-
-# Set up environment variables
-cp .env.example .env
-# Fill in your Firebase config values in .env
-
-# Start development server
 npm run dev
 ```
 
-### Environment Variables
-
-```env
-VITE_FIREBASE_API_KEY=your_api_key
-VITE_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
-VITE_FIREBASE_PROJECT_ID=your_project_id
-VITE_FIREBASE_STORAGE_BUCKET=your_project.appspot.com
-VITE_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
-VITE_FIREBASE_APP_ID=your_app_id
-VITE_FIREBASE_FIRESTORE_DATABASE_ID=(default)
-```
-
 ---
 
-## 🖼️ Preview
+## License
 
-<div align="center">
-  <p><em>Glassmorphism UI with dark theme — elegant and modern.</em></p>
-</div>
-
----
-
-## 📄 License
-
-This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details.
-
----
-
-<div align="center">
-  <img src="icon.png" alt="MyLife" width="40" />
-  <p>Made with ❤️ by <strong><a href="https://github.com/zero0-sys">zero0-sys</a></strong></p>
-</div>
+This project is licensed under the Apache License 2.0. See the [LICENSE](LICENSE) file for complete details.
